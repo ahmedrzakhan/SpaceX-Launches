@@ -33,6 +33,16 @@ const launchesSlice = createSlice({
       );
       state.filteredLaunches = newLaunches;
     },
+    filterLaunchesByDateRange(state, { payload }) {
+      const { launches } = state;
+      const { startDate, endDate } = payload;
+
+      const newLaunches = launches.filter((launch) => {
+        const newDateObj = new Date(launch.launch_date_utc);
+        return newDateObj > startDate && newDateObj < endDate;
+      });
+      state.filteredLaunches = newLaunches;
+    },
   },
   extraReducers: {
     [getLaunchData.pending]: (state) => {
@@ -49,5 +59,8 @@ const launchesSlice = createSlice({
   },
 });
 
-export const { filterLaunches } = launchesSlice.actions;
+export const {
+  filterLaunches,
+  filterLaunchesByDateRange,
+} = launchesSlice.actions;
 export default launchesSlice.reducer;
