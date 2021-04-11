@@ -106,6 +106,7 @@ const Dashboard = () => {
       filterValue: keyValue[1] && JSON.parse(keyValue[1]),
     };
     dispatch(filterLaunches(payload));
+    setLaunchStatus("")
   };
 
   const handleDateChange = (newDate) => {
