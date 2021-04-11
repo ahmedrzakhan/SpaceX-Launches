@@ -1,7 +1,11 @@
 import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-const initialState = { isLaunchDataLoading: false, launches: [] };
+const initialState = {
+  isLaunchDataLoading: false,
+  launches: [],
+  filteredLaunches: [],
+};
 
 const config = {
   method: "get",
@@ -19,20 +23,31 @@ export const getLaunchData = createAsyncThunk(
 const launchesSlice = createSlice({
   name: "launches",
   initialState,
+  reducers: {
+    filterLaunches(state, { payload }) {
+      const { launches } = state;
+      const { filterKey, filterValue = true } = payload;
 
+      const newLaunches = launches.filter(
+        (launch) => launch[filterKey] === filterValue
+      );
+      state.filteredLaunches = newLaunches;
+    },
+  },
   extraReducers: {
-    [getLaunchData.pending]: (state, action) => {
+    [getLaunchData.pending]: (state) => {
       state.isLaunchDataLoading = true;
     },
     [getLaunchData.fulfilled]: (state, { payload }) => {
       state.isLaunchDataLoading = false;
       state.launches = payload;
+      state.filteredLaunches = payload;
     },
-    [getLaunchData.rejected]: (state, action) => {
+    [getLaunchData.rejected]: (state) => {
       state.isLaunchDataLoading = false;
     },
   },
 });
 
-// export const { getLaunches } = launchesSlice.actions;
+export const { filterLaunches } = launchesSlice.actions;
 export default launchesSlice.reducer;

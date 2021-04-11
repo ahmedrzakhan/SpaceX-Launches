@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getLaunchData } from "./../../redux/launchesReducer";
 import { makeStyles } from "@material-ui/core/styles";
@@ -11,16 +11,22 @@ import {
   CardActionArea,
   CardContent,
   CardMedia,
+  FormControl,
   Grid,
+  InputLabel,
+  MenuItem,
+  Select,
   Toolbar,
   Typography,
 } from "@material-ui/core";
+import DateRangePicker from "@wojtekmaj/react-daterange-picker";
+import { filterLaunches } from "./../../redux/launchesReducer";
 
 const useStyles = makeStyles({
   root: {
     display: "flex",
     justifyContent: "center",
-    padding: "7rem 0 3rem",
+    padding: "2.5rem 0",
     maxWidth: "100%",
   },
   cardMedia: {
@@ -29,16 +35,37 @@ const useStyles = makeStyles({
   cardContent: {
     flex: 3,
   },
+  filterBar: {
+    alignItems: "center",
+    background: "#fff",
+    boxShadow: "0 2px 3px rgba(0, 0, 0, 0.3)",
+    display: "flex",
+    justifyContent: "space-evenly",
+    padding: "0.75rem 0",
+    position: "sticky",
+    top: 0,
+    zIndex: 111,
+  },
   flexBox: {
     display: "flex",
+    marginTop: "0.5rem",
+  },
+  formControl: {
+    minWidth: 150,
+  },
+  successText: {
+    color: "#008b02",
   },
   toolbarStyle: {
-      justifyContent: "center"
-  }
+    justifyContent: "center",
+  },
 });
 
 const Dashboard = () => {
-  const launches = useSelector((state) => state.launches.launches);
+  const [launchStatus, setLaunchStatus] = React.useState("");
+  const [value, onChange] = useState([new Date(), new Date()]);
+
+  const filteredLaunches = useSelector((state) => state.launches.filteredLaunches);
 
   const dispatch = useDispatch();
   const classes = useStyles();
@@ -47,21 +74,44 @@ const Dashboard = () => {
     dispatch(getLaunchData());
   }, [dispatch]);
 
+  const handleFilterChange = (event) => {
+    setLaunchStatus(event.target.value);
+    const keyValue = event.target.value.split(":");
+
+    const payload = {
+      filterKey: keyValue[0] ,
+      filterValue: keyValue[1] && JSON.parse(keyValue[1]) ,
+    };
+    dispatch(filterLaunches(payload));
+  };
+
   const redirectToLink = (linkUrl) => {
     linkUrl && window.open(linkUrl);
   };
 
+  console.log("launchStatus", launchStatus);
   return (
     <>
-      <AppBar position="fixed">
-        <Toolbar className={classes.toolbarStyle} >
+      <AppBar position="static">
+        <Toolbar className={classes.toolbarStyle}>
           <Typography variant="h6" color="inherit">
-            SPACEX
+            SpaceX
           </Typography>
         </Toolbar>
       </AppBar>
+      <Box className={classes.filterBar}>
+        <FormControl className={classes.formControl}>
+          <InputLabel>Launch Status</InputLabel>
+          <Select value={launchStatus} onChange={handleFilterChange}>
+            <MenuItem value={"launch_success:true"}>Success</MenuItem>
+            <MenuItem value={"launch_success:false"}>Failure</MenuItem>
+            <MenuItem value={"upcoming"}>Upcoming</MenuItem>
+          </Select>
+        </FormControl>
+        <DateRangePicker onChange={onChange} value={value} />
+      </Box>
       <Grid className={classes.root} container spacing={3}>
-        {launches.map((launch) => (
+        {filteredLaunches.map((launch) => (
           <Grid
             item
             key={launch.flight_number + launch.launch_date_unix}
@@ -106,6 +156,45 @@ const Dashboard = () => {
                         component="p"
                       >
                         {launch.details}
+                      </Typography>
+                    </Box>
+                  )}
+                  {launch.upcoming ? (
+                    <Box className={classes.flexBox}>
+                      <Typography variant="body2" component="p">
+                        Upcoming:&nbsp;
+                      </Typography>
+                      <Typography variant="body2" color="primary" component="p">
+                        {"Yes"}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box className={classes.flexBox}>
+                      <Typography variant="body2" component="p">
+                        Launch Status:&nbsp;
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        component="div"
+                      >
+                        {launch.launch_success ? (
+                          <Typography
+                            variant="body2"
+                            component="p"
+                            className={classes.successText}
+                          >
+                            Success
+                          </Typography>
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            component="p"
+                            color="error"
+                          >
+                            Failure
+                          </Typography>
+                        )}
                       </Typography>
                     </Box>
                   )}
